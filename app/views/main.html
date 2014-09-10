@@ -1,13 +1,35 @@
-
-<table class="table table-bordered">
-    <thead></thead>
+<form name="myForm" ng-init="optimization = 'maximize'">
+<div class="radio" >
+  <label>
+      <input type="radio" ng-model="optimization" value="maximize" ng-checked="true"> Maximize    
+  </label>
+</div>
+<div class="radio">
+  <label>
+  <input type="radio" ng-model="optimization" value="minimize"> Minimize
+  </label>
+</div>
+</form>
+<div ng-repeat="iteration in iterations track by $index">
+    <table class="table table-bordered">
+        <caption>Iteration {{$index}}</caption>
+    <thead>
+        <th ng-repeat="n in [] | range: iteration.table[0].length">x_{{$index}}</th>
+    </thead>
     <tbody>
-        <tr ng-repeat="row in tab">
-            <td ng-repeat="item in row track by $index">{{item}}</td>
+        <tr ng-repeat="row in iteration.table track by $index" >
+            <td ng-repeat="item in row track by $index" 
+                ng-class="{warning : $index==iteration.pivot.column,
+                           info : $parent.$index==iteration.pivot.row,
+                           danger:$parent.$index==iteration.pivot.row&&$index==iteration.pivot.column}">
+                {{item}}
+            </td>
         </tr>
     </tbody>
 </table>
+</div> 
 
+<!--
 <pre </pre>
 <div class="jumbotron">
   <h1>'Allo, 'Allo!</h1>
@@ -32,3 +54,4 @@
   <h4>Karma</h4>
   <p>Spectacular Test Runner for JavaScript.</p>
 </div>
+-->

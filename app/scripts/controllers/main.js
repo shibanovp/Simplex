@@ -9,17 +9,34 @@
  */
 angular.module('simplexApp')
         .factory(
-                "Simplex",
-                function(trim) {
+                'Simplex',
+                function() {
                     // Define the constructor function.
                     function Simplex() {
-                        var tableaux = [
+                        var tab = [
                             [0, 1, 3, 1, 0, 0, 6],
                             [0, -1, 1, 0, 1, 0, 1],
                             [0, 3, -1, 0, 0, 1, 6],
                             [1, -1, -2, 0, 0, 0, 0],
                         ];
+                        var tableaux = {
+                            table: tab,
+                            pivot:{
+                                row:2,
+                                column:1
+                            },
+                            quotients:[
+                                2,3,4
+                            ]
+                        };
+                        
+                        
                         this.tableaux= tableaux;
+                        var it = [];
+                        it.push(tableaux);
+                        it.push(tableaux);
+                        it.push(tableaux);
+                        this.iterations = it;
                     }
 
 
@@ -33,6 +50,9 @@ angular.module('simplexApp')
                         },
                         getTableaux: function(){
                             return this.tableaux;
+                        },
+                        getIterations: function(){
+                            return this.iterations;
                         }
                     };
 
@@ -61,7 +81,6 @@ angular.module('simplexApp')
 
                 }
         )
-        .value("trim", jQuery.trim)
 .filter('range', function() {
   return function(input, total) {
     total = parseInt(total);
@@ -84,4 +103,5 @@ angular.module('simplexApp')
             var c = [1, 2];
             var simplex = new Simplex();
             $scope.tab = simplex.getTableaux();
+            $scope.iterations = simplex.getIterations();
         });
