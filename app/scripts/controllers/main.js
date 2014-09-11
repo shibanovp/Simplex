@@ -12,31 +12,18 @@ angular.module('simplexApp')
                 'Simplex',
                 function() {
                     // Define the constructor function.
-                    function Simplex() {
+                    function Simplex(conditions) {
+                        this.conditions = conditions;
                         var tab = [
                             [0, 1, 3, 1, 0, 0, 6],
                             [0, -1, 1, 0, 1, 0, 1],
                             [0, 3, -1, 0, 0, 1, 6],
                             [1, -1, -2, 0, 0, 0, 0],
                         ];
-                        var tableaux = {
-                            table: tab,
-                            pivot:{
-                                row:2,
-                                column:1
-                            },
-                            quotients:[
-                                2,3,4
-                            ]
-                        };
-                        
-                        
-                        this.tableaux= tableaux;
-                        var it = [];
-                        it.push(tableaux);
-                        it.push(tableaux);
-                        it.push(tableaux);
-                        this.iterations = it;
+                        this.m = tab.length; // always start from 1 cause of f(x) basis
+                        this.n = tab[0].length; // always end on m-1 cause of b vector
+                        this.tableau = tab;
+                        this.solve();
                     }
 
 
@@ -44,16 +31,49 @@ angular.module('simplexApp')
                     // and standard prototypal inheritance.
                     Simplex.prototype = {
                         solve: function() {
-
-                            return(this);
-
+                            if (!this.isOptimal())
+                            {
+                                alert('there');
+                                this.findPivotColumn();
+                            }
+                            var tableaux = {
+                                table: this.tableau,
+                                pivot: {
+                                    row: 2,
+                                    column: 1
+                                },
+                                quotients: [
+                                    2, 3, 4
+                                ]
+                            };
+                            var it = [];
+                            it.push(tableaux);
+                            it.push(tableaux);
+                            it.push(tableaux);
+                            this.iterations = it;
+                            this.isOptimal();
                         },
-                        getTableaux: function(){
-                            return this.tableaux;
-                        },
-                        getIterations: function(){
+                        getIterations: function() {
                             return this.iterations;
+                        },
+                        isOptimal: function() {
+                            for (var i = 1; i < this.n - 1; i++)
+                                if (this.tableau[this.m - 1][i] < 0)
+                                    return 0;
+                            return 1;
+                        },
+                        findPivotColumn: function() {
+                            var minIndex = 1;
+                            var vector = this.tableau[this.m - 1];
+                            for (var i = 1; i < this.n - 1; i++) {
+                                if (vector[i] < vector[minIndex])
+                                    minIndex = i;
+                            }
+                            return minIndex;
                         }
+
+
+
                     };
 
 
@@ -81,14 +101,14 @@ angular.module('simplexApp')
 
                 }
         )
-.filter('range', function() {
-  return function(input, total) {
-    total = parseInt(total);
-    for (var i=0; i<total; i++)
-      input.push(i);
-    return input;
-  };
-})
+        .filter('range', function() {
+            return function(input, total) {
+                total = parseInt(total);
+                for (var i = 0; i < total; i++)
+                    input.push(i);
+                return input;
+            };
+        })
 
 
 
@@ -101,7 +121,40 @@ angular.module('simplexApp')
             var a = [
             ];
             var c = [1, 2];
-            var simplex = new Simplex();
-            $scope.tab = simplex.getTableaux();
-            $scope.iterations = simplex.getIterations();
+            $scope.$watch('conditions.numberOfVariables', function(newValue, oldValue) {
+                $scope.conditions.numberOfVariables = 0;
+                $scope.conditions.numberOfVariables = newValue;
+                $scope.solve();
+            });
+            $scope.solve = function() {
+                var simplex = new Simplex($scope.optimization);
+                $scope.iterations = simplex.getIterations();
+            }
+            //$scope.solve();
+
+        })
+        .directive('numberOnlyInput', function() {
+            return {
+                restrict: 'EA',
+                scope: {
+                    inputValue: '=',
+                    inputName: '='
+                },
+                link: function(scope) {
+                    scope.$watch('inputValue', function(newValue, oldValue) {
+                        var arr = String(newValue).split("");
+                        if (arr.length === 0)
+                            return;
+                        if (arr.length === 1 && (arr[0] == '-' || arr[0] === '.'))
+                            return;
+                        if (arr.length === 2 && newValue === '-.')
+                            return;
+                        if (isNaN(newValue)) {
+                            scope.inputValue = oldValue;
+                        }
+                    });
+                }
+            };
         });
+
+;

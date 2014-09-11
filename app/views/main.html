@@ -1,20 +1,35 @@
-<form name="myForm" ng-init="optimization = 'maximize'">
+<form name="myForm" optimization-form ng-init="conditions.optimization = 'maximize'" ng-model="conditions">
 <div class="radio" >
+    <label> Number Of Variables
+        <input ng-init="conditions.numberOfVariables=2" type="number" value="2" min="2" number-only-input ng-model="conditions.numberOfVariables"
+               ng-change="conditions.c={}">
+    </label><br/>
+    <label>f(x)=
+    </label>
+    <label ng-repeat="n in [] | range: conditions.numberOfVariables" style="padding-left: 0">
+        <input ng-init="conditions.c[$index]=0" 
+               size="1" 
+               type="text" value="0"  number-only-input 
+               ng-model="conditions.c[$index]">x_{{$index+1}} <span ng-show="$index<conditions.numberOfVariables-1">+</span></label>
+    <br/>
   <label>
-      <input type="radio" ng-model="optimization" value="maximize" ng-checked="true"> Maximize    
+      <input type="radio" ng-model="conditions.optimization" value="maximize" ng-checked="true"> Maximize    
   </label>
 </div>
 <div class="radio">
   <label>
-  <input type="radio" ng-model="optimization" value="minimize"> Minimize
+  <input type="radio" ng-model="conditions.optimization" value="minimize"> Minimize
   </label>
 </div>
 </form>
+{{conditions}}
 <div ng-repeat="iteration in iterations track by $index">
     <table class="table table-bordered">
         <caption>Iteration {{$index}}</caption>
     <thead>
-        <th ng-repeat="n in [] | range: iteration.table[0].length">x_{{$index}}</th>
+        <th>f(x)</th>
+        <th ng-repeat="n in [] | range: iteration.table[0].length-2">x_{{$index}}</th>
+        <th>b</th>
     </thead>
     <tbody>
         <tr ng-repeat="row in iteration.table track by $index" >
