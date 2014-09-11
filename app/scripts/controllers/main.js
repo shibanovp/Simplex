@@ -8,9 +8,31 @@
  * Controller of the simplexApp
  */
 angular.module('simplexApp')
+        .factory('Tableau', function() {
+            function Tableau(tab) {
+                this.table = tab;
+                this.m = tab.length; // rows
+                this.n = tab[0].length; // columns
+            }
+            Tableau.prototype = {
+                getTableau: function() {
+                    return this.table
+                },
+                divideRow: function(rowIndex,denominator){
+                    for (var i = 0; i < this.n; i++)
+                        this.table[rowIndex][i] /= denominator;
+                },
+                addRowToRow: function(addToIndex,addWhatIndex,multiplier){
+                    multiplier = typeof multiplier !== 'undefined' ? multiplier : 1;//Default 1
+                    for (var i = 0; i < this.n; i++)
+                        this.table[addToIndex][i] += this.table[addWhatIndex][i]*multiplier;
+                }
+            };
+            return(Tableau);
+        })
         .factory(
                 'Simplex',
-                function() {
+                function(Tableau) {
                     // Define the constructor function.
                     function Simplex(conditions) {
                         this.conditions = conditions;
@@ -33,23 +55,34 @@ angular.module('simplexApp')
                         solve: function() {
                             if (!this.isOptimal())
                             {
-                                alert('there');
-                                this.findPivotColumn();
+                                var pivotColumn = this.findPivotColumnIndex();
+                                var pivotRow = this.findPivotRowIndex(pivotColumn);
+                                var pivot = {
+                                    row: pivotRow,
+                                    column: pivotColumn
+                                }
                             }
                             var tableaux = {
                                 table: this.tableau,
-                                pivot: {
-                                    row: 2,
-                                    column: 1
-                                },
+                                pivot: pivot,
                                 quotients: [
                                     2, 3, 4
                                 ]
                             };
                             var it = [];
-                            it.push(tableaux);
-                            it.push(tableaux);
-                            it.push(tableaux);
+                            
+                            it.push(Simplex.clone(tableaux));
+                            var t = new Tableau(this.tableau);
+                            t.addRowToRow(0,1,-3);
+                            tableaux.table = t.getTableau();
+                            t.addRowToRow(2,1);
+                            tableaux.table = t.getTableau();
+                            it.push(Simplex.clone(tableaux));
+                            t.addRowToRow(3,1,2);
+                            tableaux.table = t.getTableau();
+                            it.push(Simplex.clone(tableaux));
+                            tableaux.table = t.getTableau();
+                            it.push(Simplex.clone(tableaux));
                             this.iterations = it;
                             this.isOptimal();
                         },
@@ -62,7 +95,7 @@ angular.module('simplexApp')
                                     return 0;
                             return 1;
                         },
-                        findPivotColumn: function() {
+                        findPivotColumnIndex: function() {
                             var minIndex = 1;
                             var vector = this.tableau[this.m - 1];
                             for (var i = 1; i < this.n - 1; i++) {
@@ -70,10 +103,35 @@ angular.module('simplexApp')
                                     minIndex = i;
                             }
                             return minIndex;
-                        }
+                        },
+                        findPivotRowIndex: function(columnIndex) {
+                            var quotients = [];
+                            var tableau = this.tableau;
+                            var b = this.n - 1; // Index for b vector
+                            for (var j = 0; j < this.m - 1; j++)
+                                quotients.push(tableau[j][b] / tableau[j][columnIndex]);
+                            var minIndex = undefined;
+                            for (var i = 0; i < quotients.length; i++)
+                                if (minIndex === undefined) {
+                                    if (quotients[i] > 0)
+                                        minIndex = i;
+                                } else {
+                                    if ((quotients[i] < quotients[minIndex]) && (quotients[i] > 0))
+                                        minIndex = i;
+                                }
+                            return minIndex;
 
 
-
+                            /*
+                             var minIndex = 1;
+                             var vector = this.tableau[this.m - 1];
+                             for (var i = 1; i < this.n - 1; i++) {
+                             if (vector[i] < vector[minIndex])
+                             minIndex = i;
+                             }
+                             return minIndex;
+                             */
+                        },
                     };
 
 
@@ -97,6 +155,9 @@ angular.module('simplexApp')
 
                     // Return constructor - this is what defines the actual
                     // injectable in the DI framework.
+                    Simplex.clone = function(src){
+                        return JSON.parse(JSON.stringify(src));
+                    };
                     return(Simplex);
 
                 }
