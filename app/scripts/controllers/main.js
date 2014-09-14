@@ -43,7 +43,7 @@ angular.module('simplexApp')
                         var a = (-1) * table[j][columnIndex]; //For elimination 
                         //if (a==-1) a=a*(-1);
                         this.addRowToRow(j, rowIndex, a);
-                        console.log([j, rowIndex, a])
+                        //console.log([j, rowIndex, a])
                     }
                 }
             };
@@ -51,7 +51,7 @@ angular.module('simplexApp')
         })
         .factory(
                 'Simplex',
-                function (Tableau) {
+                function (Tableau) { // Tableau is dependency
                     // Define the constructor function.
                     function Simplex(conditions) {
                         this.conditions = conditions;
@@ -66,10 +66,25 @@ angular.module('simplexApp')
                             [0, -1, 1, 0, 1, 8],
                             [1, -2, -1, 0, 0, 0]
                         ];
+                        /*DUAL*/
                         var tab = [
                             [0, -2, 1, 1, 0, -2],
                             [0, 1, -1, 0, 1, -1],
                             [1, 10, 8, 0, 0, 0]
+                        ];
+
+                        // x0 = 12, x1 = 28, opt = 800
+                        var tab = [
+                            [0, 5, 15, 1, 0, 0, 480],
+                            [0, 4, 4, 0, 1, 0, 160],
+                            [0, 35, 20, 0, 0, 1, 1190],
+                            [1, -13, -23, 0, 0, 0, 0],
+                        ];
+                        // unbounded
+                        var tab = [
+                            [0, -2, -9, 1, 9, 1, 0, 480],
+                            [0, 1, 1, -1, -2, 0, 1, 160],
+                            [1, -2, -3, -1, -12, 0, 0, 0],
                         ];
 
                         /*
@@ -97,7 +112,7 @@ angular.module('simplexApp')
                     Simplex.prototype = {
                         solve: function () {
                             if (!this.isFeasible()) {
-                                var unfeasibleRow,unfeasibleColumn;
+                                var unfeasibleRow, unfeasibleColumn;
                                 unfeasibleRow = this.findUnfeasibleRow();
                                 unfeasibleColumn = this.findUnfeasibleColumn(unfeasibleRow);
                                 do {
@@ -112,9 +127,8 @@ angular.module('simplexApp')
                                         quotients: [2, 3, 4]
                                     };
                                     this.iterations.push(Simplex.clone(iteration));
-                                    this.tableau.makeColumnBasis(unfeasibleColumn, unfeasibleRow)
-                                    
-                                }while(!this.isFeasible())
+                                    this.tableau.makeColumnBasis(unfeasibleColumn, unfeasibleRow);
+                                } while (!this.isFeasible())
                             }
                             var i = 1
                             if (!this.isOptimal()) {
@@ -132,6 +146,8 @@ angular.module('simplexApp')
                                     };
                                     this.iterations.push(Simplex.clone(iteration));
                                     //console.log(this.iterations)
+                                    if (pivotRow === undefined)
+                                        return alert('unbounded');
 //
                                     this.tableau.makeColumnBasis(pivotColumn, pivotRow)
                                     i++;
@@ -267,10 +283,10 @@ angular.module('simplexApp')
                                     return i;
                             return undefined;
                         },
-                        findUnfeasibleColumn:function (unfeasibleRow){
+                        findUnfeasibleColumn: function (unfeasibleRow) {
                             var tableau = this.tableau.getTableau();
-                            for (var i = 1; i<this.n-1; i++)
-                                if (tableau[unfeasibleRow][i]<0)
+                            for (var i = 1; i < this.n - 1; i++)
+                                if (tableau[unfeasibleRow][i] < 0)
                                     return i;
                             return undefined;
                         }
@@ -318,17 +334,85 @@ angular.module('simplexApp')
                 'AngularJS',
                 'Karma'
             ];
-            var a = [
+            $scope.operations = [
+                {name: '≤'},
+                {name: '='},
+                {name: '≥'},
             ];
-            var c = [1, 2];
+            //$scope.conditions={}
+
+            //$scope.conditions.operations = $scope.operations[0]
+
             $scope.$watch('conditions.numberOfVariables', function (newValue, oldValue) {
-                $scope.conditions.numberOfVariables = 0;
-                $scope.conditions.numberOfVariables = newValue;
-                $scope.solve();
+                var c = $scope.conditions.c;
+
+                if (newValue !== null && c !== undefined) {
+                    for (var i = newValue; i < c.oldValue; i++) {
+                        delete c[i];
+                    }
+                    var a = $scope.conditions.a;
+                    for (var i = 0; i < $scope.conditions.numberOfRestrictions; i++)
+                        for (var j = newValue; j < c.oldValue; j++)
+                            delete a[i][j];
+                    c.oldValue = newValue;
+                }
+                //$scope.solve();
+            });
+            $scope.$watch('conditions.numberOfRestrictions', function (newValue, oldValue) {
+                var a = $scope.conditions.a;
+                var b = $scope.conditions.b;
+                var o = $scope.conditions.operations;
+                if (newValue !== null && a !== undefined) {
+                    for (var i = newValue; i < a.oldValue; i++) {
+                        delete a[i];
+                        delete b[i];
+                        delete o[i];
+                    }
+                    a.oldValue = newValue;
+                }
+
+                //alert(newValue);
+                //
+                //$scope.conditions.numberOfVariables = 0;
+                //$scope.conditions.numberOfVariables = newValue;
+                //$scope.solve();
             });
             $scope.solve = function () {
-                var simplex = new Simplex($scope.optimization);
-                $scope.iterations = simplex.getIterations();
+                
+                // first column(f(x) in basis)
+                var typeOfOptimization = $scope.conditions.optimization;
+                var n = $scope.conditions.numberOfVariables;
+                var m = $scope.conditions.numberOfRestrictions;
+                var item;
+                var c = [];//objectiveFunctionCoefficients
+                for (var i = 0; i < n; i++)
+                {
+                    item = parseFloat($scope.conditions.c[i]);
+                    c.push(item);
+                }
+                var a = [];
+                var b = [];
+                var row;
+                for (var i = 0; i < m; i++){
+                    row = [];
+                    for (var j = 0; j < n; j++){
+                        item = parseFloat($scope.conditions.a[i][j]);
+                        row.push(item)
+                    }
+                    a.push(row);
+                    item = parseFloat($scope.conditions.b[i]);
+                    b.push(item);
+                }
+                for (var i = 0; i < m; i++){
+                    
+                }
+                    
+                        
+                
+                
+                console.log(b)
+                //var simplex = new Simplex($scope.optimization);
+                //$scope.iterations = simplex.getIterations();
             }
             //$scope.solve();
 

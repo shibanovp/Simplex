@@ -1,26 +1,61 @@
 <form name="myForm" optimization-form ng-init="conditions.optimization = 'maximize'" ng-model="conditions">
-<div class="radio" >
+<div>
     <label> Number Of Variables
-        <input ng-init="conditions.numberOfVariables=2" type="number" value="2" min="2" number-only-input ng-model="conditions.numberOfVariables"
-               ng-change="conditions.c={}">
+        <input ng-init="conditions.numberOfVariables=2" type="number" value="2" min="2" number-only-input 
+               ng-model="conditions.numberOfVariables"
+               ng-change="solve()"
+               >
     </label><br/>
-    <label>f(x)=
+    <label>Objective function f(x)=
     </label>
     <label ng-repeat="n in [] | range: conditions.numberOfVariables" style="padding-left: 0">
-        <input ng-init="conditions.c[$index]=0" 
+        <input ng-init="conditions.c[$index]=conditions.c[$index] || 0" 
                size="1" 
                type="text" value="0"  number-only-input 
-               ng-model="conditions.c[$index]">x_{{$index+1}} <span ng-show="$index<conditions.numberOfVariables-1">+</span></label>
+               ng-model="conditions.c[$index]"
+               ng-change="solve()"
+               >x_{{$index+1}} <span ng-show="$index<conditions.numberOfVariables-1">+</span>
+               
+    </label>
     <br/>
   <label>
-      <input type="radio" ng-model="conditions.optimization" value="maximize" ng-checked="true"> Maximize    
+      <input type="radio" ng-model="conditions.optimization" 
+             value="maximize" ng-checked="true"
+             ng-change="solve()"> Maximize    
   </label>
 </div>
 <div class="radio">
   <label>
-  <input type="radio" ng-model="conditions.optimization" value="minimize"> Minimize
+  <input type="radio" ng-model="conditions.optimization" value="minimize" ng-change="solve()"> Minimize
   </label>
 </div>
+    <div>
+        <label> Number Of Restrictions
+        <input ng-init="conditions.numberOfRestrictions=2" type="number" value="2" min="1" number-only-input ng-model="conditions.numberOfRestrictions"
+               ng-change="solve()">
+        </label><br/>
+        <div ng-repeat="m in [] | range:conditions.numberOfRestrictions">
+        <label ng-repeat="n in [] | range:conditions.numberOfVariables">
+           <input ng-init="conditions.a[$parent.$index][$index]=conditions.a[$parent.$index][$index]||0" 
+               size="1" 
+               type="text" value="0"  number-only-input 
+               ng-model="conditions.a[$parent.$index][$index]"
+               ng-change="solve()"
+               >x_{{$index+1}} <span ng-show="$index < conditions.numberOfVariables-1">+</span> 
+        </label>
+        <select 
+            ng-model="conditions.operations[$index]"
+            ng-init="conditions.operations[$index]=conditions.operations[$index] || operations[0]"
+            ng-options="operation.name for operation in operations"
+            ng-change="solve()"
+            ></select>
+        <input type="text"
+               ng-init="conditions.b[$index]=conditions.b[$index] || 0"
+               ng-model="conditions.b[$index]"
+               ng-change="solve()"
+               >
+        </div>
+    </div>
 </form>
 {{conditions}}
 <div ng-repeat="iteration in iterations track by $index">
