@@ -37,7 +37,7 @@
                 ng-class="{warning : $index==iteration.pivot.column,
                            info : $parent.$index==iteration.pivot.row,
                            danger:$parent.$index==iteration.pivot.row&&$index==iteration.pivot.column}">
-                {{item}}
+                {{item | number}}
             </td>
         </tr>
     </tbody>
