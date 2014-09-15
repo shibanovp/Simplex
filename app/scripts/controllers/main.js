@@ -53,63 +53,39 @@ angular.module('simplexApp')
                 'Simplex',
                 function (Tableau) { // Tableau is dependency
                     // Define the constructor function.
-                    function Simplex(conditions) {
-                        this.conditions = conditions;
-                        var a = [
-                            [1, 3],
-                            [-1, 1],
-                            [3, -1]
-                        ];
-                        //var b = [6,1,6,0];
-                        var tab = [
-                            [0, 2, -1, 1, 0, 10],
-                            [0, -1, 1, 0, 1, 8],
-                            [1, -2, -1, 0, 0, 0]
-                        ];
-                        /*DUAL*/
-                        var tab = [
-                            [0, -2, 1, 1, 0, -2],
-                            [0, 1, -1, 0, 1, -1],
-                            [1, 10, 8, 0, 0, 0]
-                        ];
-
-                        // x0 = 12, x1 = 28, opt = 800
-                        var tab = [
-                            [0, 5, 15, 1, 0, 0, 480],
-                            [0, 4, 4, 0, 1, 0, 160],
-                            [0, 35, 20, 0, 0, 1, 1190],
-                            [1, -13, -23, 0, 0, 0, 0],
-                        ];
-                        // unbounded
-                        var tab = [
-                            [0, -2, -9, 1, 9, 1, 0, 480],
-                            [0, 1, 1, -1, -2, 0, 1, 160],
-                            [1, -2, -3, -1, -12, 0, 0, 0],
-                        ];
-
-                        /*
-                         var tab = [
-                         [0, 2, -1, 1, 0, 2],
-                         [0, -1, 1, 0, 1, 1],
-                         [1, -10, -8, 0, 0, 0]
-                         ];
-                         var tab = [
-                         [0, 1, 3, 1, 0, 0, 6],
-                         [0, -1, 1, 0, 1, 0, 1],
-                         [0, 3, -1, 0, 0, 1, 6],
-                         [1, -1, -2, 0, 0, 0, 0],
-                         ];*/
-                        this.tableau = new Tableau(tab);
+                    function Simplex(a, b, c, typeOfOptimization) {
+                        var table = this.formTable(a, b, c, typeOfOptimization);
+                        this.typeOfOptimization = typeOfOptimization;
+                        this.tableau = new Tableau(table);
                         this.m = this.tableau.getM(); // always start from 1 cause of f(x) basis
                         this.n = this.tableau.getN(); // always end on m-1 cause of b vector
                         this.iterations = [];
-                        this.solve();
+                        this.result = this.solve();
                     }
 
 
                     // Define the "instance" methods using the prototype
                     // and standard prototypal inheritance.
                     Simplex.prototype = {
+                        formTable: function (a, b, c, typeOfOptimization) {
+                            //var table = this.formTable(a,b,c,typeOfOptimization)
+                            console.log({'a': a, 'b': b, 'c': c, 't': typeOfOptimization});
+                            //this.typeOfOptimization=typeOfOptimization;
+                            var tab = a;
+                            var m = a.length;
+                            for (var i = 0; i < m; i++) {
+                                tab[i].unshift(0);//add zero first
+                                tab[i].push(b[i]);//a
+                            }
+                            var objectiveCoefficients = [];
+                            for (var i = 0; i < c.length; i++) //solve objective function for min and max
+                                objectiveCoefficients.push((typeOfOptimization === 'minimize') ? c[i] : -c[i]);
+                            objectiveCoefficients.unshift((typeOfOptimization === 'minimize') ? -1 : 1);
+                            for (var i = objectiveCoefficients.length - 1;i < tab[0].length-1; i++)
+                                objectiveCoefficients.push(0)// add zeros to objective function
+                            tab.push(objectiveCoefficients);
+                            return tab;
+                        },
                         solve: function () {
                             if (!this.isFeasible()) {
                                 var unfeasibleRow, unfeasibleColumn;
@@ -127,10 +103,12 @@ angular.module('simplexApp')
                                         quotients: [2, 3, 4]
                                     };
                                     this.iterations.push(Simplex.clone(iteration));
+                                    
+                                    if (unfeasibleColumn === undefined)
+                                        return 'unfeasible';
                                     this.tableau.makeColumnBasis(unfeasibleColumn, unfeasibleRow);
                                 } while (!this.isFeasible())
                             }
-                            var i = 1
                             if (!this.isOptimal()) {
                                 var pivotColumn, pivotRow, iteration;
                                 do {
@@ -147,75 +125,25 @@ angular.module('simplexApp')
                                     this.iterations.push(Simplex.clone(iteration));
                                     //console.log(this.iterations)
                                     if (pivotRow === undefined)
-                                        return alert('unbounded');
+                                        return 'unbounded'
 //
                                     this.tableau.makeColumnBasis(pivotColumn, pivotRow)
-                                    i++;
-                                    if (i > 10)
-                                        break;
                                 } while (!this.isOptimal())
-
-
                             }
                             this.tableau.getTableau();
                             var iteration = {
                                 table: this.tableau.getTableau()
                             };
                             this.iterations.push(Simplex.clone(iteration));
-
-
-
-                            /*var pivotColumn,pivotRow,iteration;
-                             do {
-                             pivotColumn = this.findPivotColumnIndex();
-                             pivotRow = this.findPivotRowIndex(pivotColumn);
-                             iteration = {
-                             table: this.tableau,
-                             pivot: {
-                             column: pivotColumn,
-                             row: pivotRow
-                             },
-                             quotients: [2, 3, 4]
-                             }; 
-                             if (this.isOptimal()) {
-                             iteration = {}
-                             break;
-                             }
-                             this.iterations.push(Simplex.clone(iteration));
-                             
-                             } while (!this.isOptimal())
-                             
-                             
-                             
-                             
-                             if (!this.isOptimal())
-                             {
-                             var pivotColumn = this.findPivotColumnIndex();
-                             var pivotRow = this.findPivotRowIndex(pivotColumn);
-                             
-                             var pivot = {
-                             row: pivotRow,
-                             column: pivotColumn
-                             }
-                             }
-                             var tableaux = {
-                             table: this.tableau,
-                             pivot: pivot,
-                             quotients: [
-                             2, 3, 4
-                             ]
-                             };
-                             var it = [];
-                             it.push(Simplex.clone(tableaux));
-                             var t = new Tableau(this.tableau);
-                             t.makeColumnBasis(pivotColumn,pivotRow)
-                             tableaux.table = t.getTableau();
-                             it.push(Simplex.clone(tableaux));
-                             this.iterations = it;
-                             this.isOptimal();*/
+                            return (this.typeOfOptimization === 'minimize')? 
+                            -this.tableau.getTableau()[this.m-1][this.n-1] : 
+                            this.tableau.getTableau()[this.m-1][this.n-1];
                         },
                         getIterations: function () {
                             return this.iterations;
+                        },
+                        getResult: function(){
+                            return this.result;
                         },
                         isOptimal: function () {
                             var table = this.tableau.getTableau();
@@ -234,14 +162,14 @@ angular.module('simplexApp')
                             return minIndex;
                         },
                         findPivotRowIndex: function (columnIndex) {
-                            //console.log([columnIndex])
                             var quotients = [];
                             var tableau = this.tableau.getTableau();
                             var b = this.n - 1; // Index for b vector
-                            for (var j = 0; j < this.m - 1; j++)
-                                quotients.push(tableau[j][b] / tableau[j][columnIndex]);
+                            for (var j = 0; j < this.m - 1; j++){
+                                if (tableau[j][columnIndex]===0) quotients.push(0);
+                                else quotients.push(tableau[j][b] / tableau[j][columnIndex]);
+                            }
                             var minIndex = undefined;
-                            //console.log(tableau)
                             for (var i = 0; i < quotients.length; i++)
                                 if (minIndex === undefined) {
                                     if (quotients[i] > 0)
@@ -250,24 +178,13 @@ angular.module('simplexApp')
                                     if ((quotients[i] < quotients[minIndex]) && (quotients[i] > 0))
                                         minIndex = i;
                                 }
-                            //console.log(minIndex)
                             return minIndex;
-                            /*
-                             var minIndex = 1;
-                             var vector = this.tableau[this.m - 1];
-                             for (var i = 1; i < this.n - 1; i++) {
-                             if (vector[i] < vector[minIndex])
-                             minIndex = i;
-                             }
-                             return minIndex;
-                             */
                         },
                         isFeasible: function () {
                             var tableau = this.tableau.getTableau();
                             var quotients = [];
                             for (var j = 0; j < this.m - 1; j++)
                                 quotients.push(tableau[j][this.n - 1])
-                            //console.log(quotients);
                             for (var i = 0; i < quotients.length; i++)
                                 if (quotients[i] < 0)
                                     return 0;
@@ -293,27 +210,13 @@ angular.module('simplexApp')
                     };
                     // Define the "class" / "static" methods. These are
                     // utility methods on the class itself; they do not
-                    /* have access to the "this" reference.
-                     Friend.fromFullName = function( fullName ) {
-                     
-                     var parts = trim( fullName || "" ).split( /\s+/gi );
-                     
-                     return(
-                     new Friend(
-                     parts[ 0 ],
-                     parts.splice( 0, 1 ) && parts.join( " " )
-                     )
-                     );
-                     
-                     
-                     };*/
-
-
-                    // Return constructor - this is what defines the actual
-                    // injectable in the DI framework.
-                    Simplex.clone = function (src) {
+                    // have access to the "this" reference.
+                    
+                         Simplex.clone = function (src) {
                         return JSON.parse(JSON.stringify(src));
                     };
+                    // Return constructor - this is what defines the actual
+                    // injectable in the DI framework.
                     return(Simplex);
                 }
         )
@@ -325,27 +228,10 @@ angular.module('simplexApp')
                 return input;
             };
         })
-
-
-
         .controller('MainCtrl', function ($scope, Simplex) {
-            $scope.awesomeThings = [
-                'HTML5 Boilerplate',
-                'AngularJS',
-                'Karma'
-            ];
-            $scope.operations = [
-                {name: '≤'},
-                {name: '='},
-                {name: '≥'},
-            ];
-            //$scope.conditions={}
-
-            //$scope.conditions.operations = $scope.operations[0]
-
+            $scope.operations = ['≤', '=', '≥'];
             $scope.$watch('conditions.numberOfVariables', function (newValue, oldValue) {
                 var c = $scope.conditions.c;
-
                 if (newValue !== null && c !== undefined) {
                     for (var i = newValue; i < c.oldValue; i++) {
                         delete c[i];
@@ -356,7 +242,6 @@ angular.module('simplexApp')
                             delete a[i][j];
                     c.oldValue = newValue;
                 }
-                //$scope.solve();
             });
             $scope.$watch('conditions.numberOfRestrictions', function (newValue, oldValue) {
                 var a = $scope.conditions.a;
@@ -370,21 +255,12 @@ angular.module('simplexApp')
                     }
                     a.oldValue = newValue;
                 }
-
-                //alert(newValue);
-                //
-                //$scope.conditions.numberOfVariables = 0;
-                //$scope.conditions.numberOfVariables = newValue;
-                //$scope.solve();
             });
             $scope.solve = function () {
-                
-                // first column(f(x) in basis)
-                var typeOfOptimization = $scope.conditions.optimization;
                 var n = $scope.conditions.numberOfVariables;
                 var m = $scope.conditions.numberOfRestrictions;
                 var item;
-                var c = [];//objectiveFunctionCoefficients
+                var c = []; //objectiveFunctionCoefficients
                 for (var i = 0; i < n; i++)
                 {
                     item = parseFloat($scope.conditions.c[i]);
@@ -393,29 +269,34 @@ angular.module('simplexApp')
                 var a = [];
                 var b = [];
                 var row;
-                for (var i = 0; i < m; i++){
+                for (var i = 0; i < m; i++) {
                     row = [];
-                    for (var j = 0; j < n; j++){
+                    for (var j = 0; j < n; j++) {
                         item = parseFloat($scope.conditions.a[i][j]);
-                        row.push(item)
+                        row.push(item);
                     }
                     a.push(row);
                     item = parseFloat($scope.conditions.b[i]);
                     b.push(item);
+                }// Analyse inequality sign
+                for (var i = 0; i < m; i++) {
+                    switch ($scope.conditions.operations[i]) {
+                        case '≥':
+                            for (var j = 0; j < n; j++)
+                                a[i][j] *= -1; //make inequality ≤
+                            b[i] *= -1; // no break
+                        case '≤':
+                            for (var j = 0; j < m; j++)
+                                a[j].push((i === j) ? 1 : 0); // add surplus variable to a matrix
+                            break;
+                        default:// in case '=' do nothing 
+                    }
                 }
-                for (var i = 0; i < m; i++){
-                    
-                }
-                    
-                        
-                
-                
-                console.log(b)
-                //var simplex = new Simplex($scope.optimization);
-                //$scope.iterations = simplex.getIterations();
-            }
-            //$scope.solve();
-
+                var typeOfOptimization = $scope.conditions.optimization;
+                var simplex = new Simplex(a, b, c, typeOfOptimization);
+                $scope.iterations = simplex.getIterations();
+                $scope.result = simplex.getResult();
+            };
         })
         .directive('numberOnlyInput', function () {
             return {
@@ -439,5 +320,19 @@ angular.module('simplexApp')
                     });
                 }
             };
-        });
+        })
+                  .directive("mathjaxBind", function() {
+    return {
+        restrict: "A",
+        controller: ["$scope", "$element", "$attrs", function($scope, $element, $attrs) {
+            $scope.$watch($attrs.mathjaxBind, function(value) {
+                var $script = angular.element("<script type='math/tex'>")
+                    .html(value == undefined ? "" : value);
+                $element.html("");
+                $element.append($script);
+                MathJax.Hub.Queue(["Reprocess", MathJax.Hub, $element[0]]);
+            });
+        }]
+    };
+})
 ;
