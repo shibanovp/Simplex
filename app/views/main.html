@@ -1,3 +1,6 @@
+<h4 mathjax-bind="objF">Conditions</h4>
+<h4 mathjax-bind="restrictions">Conditions</h4>
+<h4>Solution:{{result}}</h4>
 <form name="myForm" optimization-form ng-init="conditions.optimization = 'maximize'" ng-model="conditions">
     <div>
         <div class="form-inline">
@@ -19,7 +22,7 @@
                 <input ng-init="conditions.c[$index] = conditions.c[$index] || 0" 
                        class="form-control"
                        size="1" 
-                       type="text" value="0"  number-only-input 
+                       type="text" value="0"  
                        ng-model="conditions.c[$index]"
                        ng-change="solve()"
                        style="text-align: right"
@@ -60,19 +63,22 @@
                 <label ng-repeat="n in []| range:conditions.numberOfVariables">
                     <input ng-init="conditions.a[$parent.$index][$index] = conditions.a[$parent.$index][$index] || 0" 
                            size="1" 
-                           type="text" value="0"  number-only-input 
+                           type="text" value="0"  
                            ng-model="conditions.a[$parent.$index][$index]"
                            ng-change="solve()"
                            class="form-control"
                            style="text-align: right"
                            ><span mathjax-bind="'x_{'+($index+1)+'}'"></span><span mathjax-bind="'+'" ng-show="$index < conditions.numberOfVariables - 1"></span> 
                 </label>
+                <label>
                 <select class="form-control"
                         ng-model="conditions.operations[$index]"
                         ng-init="conditions.operations[$index] = conditions.operations[$index] || operations[0]"
                         ng-options="operation for operation in operations"
                         ng-change="solve()"
                         ></select>
+                </label>
+                <label>
                 <input type="text"
                        class="form-control"
                        ng-init="conditions.b[$index] = conditions.b[$index] || 0"
@@ -81,6 +87,7 @@
                        size="1"
                        style="text-align: right"
                        >
+                </label>
             </div>
         </div>
     </div>
