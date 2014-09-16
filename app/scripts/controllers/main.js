@@ -25,12 +25,16 @@ angular.module('simplexApp')
                 },
                 divideRow: function (rowIndex, denominator) {
                     for (var i = 0; i < this.n; i++)
+                    {
                         this.table[rowIndex][i] /= denominator;
+                    }
                 },
                 addRowToRow: function (addToIndex, addWhatIndex, multiplier) {
                     multiplier = typeof multiplier !== 'undefined' ? multiplier : 1; //Default 1
                     for (var i = 0; i < this.n; i++)
+                    {
                         this.table[addToIndex][i] += this.table[addWhatIndex][i] * multiplier;
+                    }
                 },
                 makeColumnBasis: function (columnIndex, rowIndex) {
                     var table = this.table;
@@ -38,8 +42,9 @@ angular.module('simplexApp')
                     this.divideRow(rowIndex, table[rowIndex][columnIndex]);
                     for (var j = 0; j < this.m; j++)
                     {
-                        if (j === rowIndex)
+                        if (j === rowIndex) {
                             continue;
+                        }
                         var a = (-1) * table[j][columnIndex]; //For elimination 
                         //if (a==-1) a=a*(-1);
                         this.addRowToRow(j, rowIndex, a);
@@ -62,13 +67,10 @@ angular.module('simplexApp')
                         this.iterations = [];
                         this.result = this.solve();
                     }
-                    // Define the "instance" methods using the prototype
+                    // Define the 'instance' methods using the prototype
                     // and standard prototypal inheritance.
                     Simplex.prototype = {
                         formTable: function (a, b, c, typeOfOptimization) {
-                            //var table = this.formTable(a,b,c,typeOfOptimization)
-                            //console.log({'a': a, 'b': b, 'c': c, 't': typeOfOptimization});
-                            //this.typeOfOptimization=typeOfOptimization;
                             var tab = a;
                             var m = a.length;
                             for (var i = 0; i < m; i++) {
@@ -76,11 +78,13 @@ angular.module('simplexApp')
                                 tab[i].push(b[i]);//a
                             }
                             var objectiveCoefficients = [];
-                            for (var i = 0; i < c.length; i++) //solve objective function for min and max
+                            for (var i = 0; i < c.length; i++) { //solve objective function for min and max
                                 objectiveCoefficients.push((typeOfOptimization === 'minimize') ? c[i] : -c[i]);
+                            }
                             objectiveCoefficients.unshift((typeOfOptimization === 'minimize') ? -1 : 1);
-                            for (var i = objectiveCoefficients.length - 1; i < tab[0].length - 1; i++)
-                                objectiveCoefficients.push(0)// add zeros to objective function
+                            for (var i = objectiveCoefficients.length - 1; i < tab[0].length - 1; i++) {
+                                objectiveCoefficients.push(0);// add zeros to objective function
+                            }
                             tab.push(objectiveCoefficients);
                             return tab;
                         },
@@ -107,8 +111,9 @@ angular.module('simplexApp')
                                     this.tableau.makeColumnBasis(unfeasibleColumn, unfeasibleRow);
                                 } while (!this.isFeasible())
                             }
+                            var iteration;
                             if (!this.isOptimal()) {
-                                var pivotColumn, pivotRow, iteration;
+                                var pivotColumn, pivotRow;
                                 do {
                                     pivotColumn = this.findPivotColumnIndex();
                                     pivotRow = this.findPivotRowIndex(pivotColumn);
@@ -122,14 +127,14 @@ angular.module('simplexApp')
                                     };
                                     this.iterations.push(Simplex.clone(iteration));
                                     //console.log(this.iterations)
-                                    if (pivotRow === undefined)
-                                        return 'unbounded'
-//
-                                    this.tableau.makeColumnBasis(pivotColumn, pivotRow)
+                                    if (pivotRow === undefined) {
+                                        return 'unbounded';
+                                    }
+                                    this.tableau.makeColumnBasis(pivotColumn, pivotRow);
                                 } while (!this.isOptimal())
                             }
                             this.tableau.getTableau();
-                            var iteration = {
+                            iteration = {
                                 table: this.tableau.getTableau()
                             };
                             this.iterations.push(Simplex.clone(iteration));
@@ -208,9 +213,9 @@ angular.module('simplexApp')
                             return undefined;
                         }
                     };
-                    // Define the "class" / "static" methods. These are
+                    // Define the 'class' / 'static' methods. These are
                     // utility methods on the class itself; they do not
-                    // have access to the "this" reference.
+                    // have access to the 'this' reference.
 
                     Simplex.clone = function (src) {
                         return JSON.parse(JSON.stringify(src));
@@ -282,12 +287,14 @@ angular.module('simplexApp')
                 for (var i = 0; i < m; i++) {
                     switch ($scope.conditions.operations[i]) {
                         case '≥':
-                            for (var j = 0; j < n; j++)
+                            for (var j = 0; j < n; j++) {
                                 a[i][j] *= -1; //make inequality ≤
+                            }
                             b[i] *= -1; // no break
                         case '≤':
-                            for (var j = 0; j < m; j++)
-                                a[j].push((i === j) ? 1 : 0); // add surplus variable to a matrix
+                            for (var j = 0; j < m; j++) {
+                                a[j].push((i === j) ? 1 : 0);// add surplus variable to a matrix
+                            }
                             break;
                         default:// in case '=' do nothing 
                     }
@@ -304,60 +311,70 @@ angular.module('simplexApp')
                 var n = $scope.conditions.numberOfVariables;
                 var objFunction = 'f(x)=';
                 for (var i = 0; i < n; i++) {
-                    if ((i === 0)){
-                            objFunction += c[i] + 'x_{' + (i + 1) + '}';
-                    }else if(i === n-1 ){
-                        if (c[i] >= 0) objFunction +='+';
-                            objFunction += c[i] + 'x_{' + (i + 1) + '}';
+                    if ((i === 0)) {
+                        objFunction += c[i] + 'x_{' + (i + 1) + '}';
+                    } else if (i === n - 1) {
+                        if (c[i] >= 0)
+                            objFunction += '+';
+                        objFunction += c[i] + 'x_{' + (i + 1) + '}';
                     }
-                    else{
-                        if (c[i] >= 0) objFunction +='+';
-                            objFunction += c[i] + 'x_{' + (i + 1) + '}';
+                    else {
+                        if (c[i] >= 0)
+                            objFunction += '+';
+                        objFunction += c[i] + 'x_{' + (i + 1) + '}';
                     }
                 }
-                objFunction +='→'+$scope.conditions.optimization;
+                objFunction += '→' + $scope.conditions.optimization;
                 return objFunction;
-            }
-            $scope.getRestrictions = function (){
+            };
+            $scope.getRestrictions = function () {
                 var restrictions = '\\left\\{\\begin{matrix}';
                 var n = $scope.conditions.numberOfVariables;
                 var m = $scope.conditions.numberOfRestrictions;
                 var b = $scope.conditions.b;
                 var a = $scope.conditions.a;
                 var op = $scope.conditions.operations;
-                var restriction,item;
-                for (var i=0; i<m; i++){
-                    restriction ='';
-                    for (var j = 0; j < n; j++){
+                var restriction, item;
+                for (var i = 0; i < m; i++) {
+                    restriction = '';
+                    for (var j = 0; j < n; j++) {
                         item = a[i][j];
-                        if ((item >= 0)&&(j !== 0))
-                             restriction += '+'+item;
-                        else 
-                             restriction += item;
-                        restriction += 'x_{'+(j+1)+'}';
+                        if ((item >= 0) && (j !== 0)) {
+                            restriction += '+' + item;
+                        }
+                        else {
+                            restriction += item;
+                        }
+                        restriction += 'x_{' + (j + 1) + '}';
                     }
                     switch (op[i]) {
-                        case '≥':restriction+='\\geq';break;
-                        case '≤':restriction+='\\leq';break;
-                        default: restriction+='=';break;
+                        case '≥':
+                            restriction += '\\geq';
+                            break;
+                        case '≤':
+                            restriction += '\\leq';
+                            break;
+                        default:
+                            restriction += '=';
+                            break;
                     }
-                    restriction+=b[i]+'\\\\';
-                    restrictions+= restriction
+                    restriction += b[i] + '\\\\';
+                    restrictions += restriction;
                 }
-                restrictions+='\\end{matrix}\\right.';
+                restrictions += '\\end{matrix}\\right.';
                 return restrictions;
             }
         })
-        .directive("mathjaxBind", function () {
+        .directive('mathjaxBind', function () {
             return {
-                restrict: "A",
-                controller: ["$scope", "$element", "$attrs", function ($scope, $element, $attrs) {
+                restrict: 'A',
+                controller: ['$scope', '$element', '$attrs', function ($scope, $element, $attrs) {
                         $scope.$watch($attrs.mathjaxBind, function (value) {
-                            var $script = angular.element("<script type='math/tex'>")
-                                    .html(value == undefined ? "" : value);
-                            $element.html("");
+                            var $script = angular.element('<script type="math/tex">')
+                                    .html(value === undefined ? '' : value);
+                            $element.html('');
                             $element.append($script);
-                            MathJax.Hub.Queue(["Reprocess", MathJax.Hub, $element[0]]);
+                            MathJax.Hub.Queue(['Reprocess', MathJax.Hub, $element[0]]);
                         });
                     }]
             };
